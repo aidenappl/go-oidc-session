@@ -250,13 +250,10 @@ func (p *Provider) Validate() error {
 		if p.IssuerURL == "" {
 			return fmt.Errorf("sso: oidc provider %q has no issuer_url", p.Slug)
 		}
-		if p.FetchUserInfo && p.UserInfoURL == "" {
-			// Discovery supplies it, so this is only reachable if the caller both
-			// asked for UserInfo and the discovery document omitted the endpoint.
-			// Reported here rather than silently skipping the fetch, because
-			// silently skipping means the sub check silently does not happen.
-			return fmt.Errorf("sso: oidc provider %q asks for userinfo but no endpoint is known", p.Slug)
-		}
+		// FetchUserInfo is NOT checked here: for KindOIDC the endpoint comes from
+		// discovery, which has not run yet. newOIDCAdapter checks it once it has.
+		// (v0.1.0 checked UserInfoURL here — a field ignored for KindOIDC — so
+		// every OIDC provider with FetchUserInfo failed validation.)
 		if p.EmailsURL != "" {
 			return fmt.Errorf("sso: oidc provider %q sets emails_url, which only applies to kind %q (use FetchUserInfo)", p.Slug, KindOAuth2)
 		}

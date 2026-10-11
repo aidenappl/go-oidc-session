@@ -506,3 +506,35 @@ func TestIdentitySID(t *testing.T) {
 		}
 	})
 }
+
+// TestUserInfo_EndpointComesFromDiscovery is the v0.1.0 regression: Validate
+// demanded UserInfoURL — a field ignored for KindOIDC — so every OIDC provider
+// with FetchUserInfo and no UserInfoURL failed before discovery could run.
+func TestUserInfo_EndpointComesFromDiscovery(t *testing.T) {
+	t.Run("no_userinfo_url_uses_discovery", func(t *testing.T) {
+		idp := oidctest.NewFakeIDP(t)
+		p := newOIDCProvider(t, idp, func(p *oidcsession.Provider) {
+			p.FetchUserInfo = true
+			p.UserInfoURL = ""
+		})
+		id, _, err := login(t, idp, p)
+		if err != nil {
+			t.Fatalf("OIDC login with FetchUserInfo and no UserInfoURL failed: %v", err)
+		}
+		if id.Email != idp.Email {
+			t.Fatalf("email = %q, want %q from UserInfo", id.Email, idp.Email)
+		}
+	})
+
+	t.Run("discovery_without_endpoint_fails_loudly", func(t *testing.T) {
+		idp := oidctest.NewFakeIDP(t)
+		idp.OmitUserInfoEndpoint = true
+		p := newOIDCProvider(t, idp, func(p *oidcsession.Provider) {
+			p.FetchUserInfo = true
+		})
+		_, err := oidcsession.NewAdapter(context.Background(), p)
+		if err == nil || !strings.Contains(err.Error(), "userinfo_endpoint") {
+			t.Fatalf("want an error naming userinfo_endpoint, got %v", err)
+		}
+	})
+}

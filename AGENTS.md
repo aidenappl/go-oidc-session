@@ -112,6 +112,10 @@ grant, and back-channel logout covers immediate revocation.
 - login bound to the browser by a `<cookie>_login` state cookie (login CSRF)
 - `return_to` restricted to `DefaultReturnURL`'s origin and `AllowedReturnOrigins` (open redirect)
 - id_token nonce verified; UserInfo `sub` must match; `sid` only from the signed id_token
+- for `KindOIDC` every endpoint (UserInfo included) comes from discovery; `UserInfoURL` /
+  `AuthorizeURL` / `TokenURL` are ignored. `FetchUserInfo` is checked against the discovered
+  `userinfo_endpoint` in `newOIDCAdapter`, not in `Validate` (which runs before discovery —
+  v0.1.0 checked it there and broke every OIDC provider that fetched UserInfo)
 - tokens AES-256-GCM sealed at rest by `sqlstore`; it refuses to run without a `Sealer`
 
 ## 7. Ecosystem & related repos
