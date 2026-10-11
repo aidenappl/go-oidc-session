@@ -1,0 +1,29 @@
+commands:
+    - name: build
+      description: Build all packages
+      run: go build ./...
+      syncAfter: false
+    - name: test
+      description: Run unit tests (sqlstore integration tests need OIDC_SESSION_TEST_DSN and -tags integration)
+      run: go test -race ./...
+      syncAfter: false
+    - name: test-integration
+      description: Run sqlstore against a throwaway MariaDB in Docker
+      run: docker run -d --rm --name oidc-session-test --tmpfs /var/lib/mysql:rw,size=600m -e MARIADB_ROOT_PASSWORD=test -e MARIADB_DATABASE=oidc_test -p 127.0.0.1:3317:3306 mariadb:11.4 --innodb-log-file-size=16M && sleep 15 && OIDC_SESSION_TEST_DSN='root:test@tcp(127.0.0.1:3317)/oidc_test?parseTime=True' go test -count=1 -tags integration ./sqlstore/; docker stop oidc-session-test
+      syncAfter: false
+    - name: fmt
+      description: Format code
+      run: gofmt -w -s .
+      syncAfter: false
+    - name: vet
+      description: Run go vet
+      run: go vet ./... && go vet -tags integration ./...
+      syncAfter: false
+    - name: check
+      description: Run all checks
+      run: gofmt -w -s . && go vet ./... && go vet -tags integration ./... && go test -race ./...
+      syncAfter: false
+    - name: tidy
+      description: Tidy dependencies
+      run: go mod tidy
+      syncAfter: false
