@@ -20,7 +20,8 @@ browser frontend** — the *Backend for Frontend* pattern of RFC 10017 §6.1. It
   leave the server;
 - **session lifetime = provider lifetime**: provider tokens are refreshed server-side when due, and
   the session ends when the provider refuses the refresh;
-- RP-initiated logout and OIDC Back-Channel Logout 1.0;
+- local logout by default, opt-in RP-initiated logout (`Manager.EndProviderSession`), and OIDC
+  Back-Channel Logout 1.0;
 - a MariaDB store (`sqlstore`) with AES-256-GCM encryption of tokens at rest.
 
 It does **not** own users, authorization (roles/grants), API tokens or password login — those stay

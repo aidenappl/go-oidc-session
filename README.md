@@ -80,7 +80,7 @@ Show your login page's button only when it was reached with `?error=…`.
 ## Project structure
 
 ```
-manager.go   sign-in handlers, Authenticate, refresh, logout
+manager.go   sign-in handlers, Authenticate, refresh, logout (local unless EndProviderSession)
 seams.go     StateStore / UserResolver / SessionStore interfaces
 oidc.go      OIDC adapter        oauth2.go  plain OAuth2 adapter
 sqlstore/    MariaDB store + AES-GCM sealer
