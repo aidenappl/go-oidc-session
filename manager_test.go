@@ -274,8 +274,29 @@ func TestManager_CallbackRequiresStateCookie(t *testing.T) {
 	}
 }
 
-func TestManager_LogoutUsesEndSessionEndpoint(t *testing.T) {
+func TestManager_LogoutIsLocalByDefault(t *testing.T) {
 	f := newApp(t, nil)
+	f.visit(t, "/login")
+
+	u, _ := url.Parse(f.srv.URL + "/logout")
+	req := httptest.NewRequest(http.MethodPost, u.String(), nil)
+	for _, c := range f.browser.Jar.Cookies(u) {
+		req.AddCookie(c)
+	}
+	target := f.m.Logout(httptest.NewRecorder(), req)
+	if strings.HasPrefix(target, f.idp.Issuer()) {
+		t.Fatalf("logout sent the browser to the provider (%s); without EndProviderSession it must only end this app's session", target)
+	}
+	if target != f.m.PostLogoutURL && target != f.m.LoginPageURL {
+		t.Fatalf("logout target %s, want PostLogoutURL", target)
+	}
+	if f.sessions.Count() != 0 {
+		t.Fatal("logout left the session in the store")
+	}
+}
+
+func TestManager_LogoutUsesEndSessionEndpoint(t *testing.T) {
+	f := newApp(t, func(f *appFixture) { f.m.EndProviderSession = true })
 	f.visit(t, "/login")
 
 	u, _ := url.Parse(f.srv.URL + "/logout")

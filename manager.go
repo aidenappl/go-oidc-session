@@ -145,6 +145,13 @@ type Manager struct {
 	// end_session_endpoint. Defaults to LoginPageURL.
 	PostLogoutURL string
 
+	// EndProviderSession makes Logout RP-initiated: it returns the provider's
+	// end_session_endpoint, which ends the provider session and — through
+	// back-channel logout — every other application's. Off by default: signing
+	// out of one application ends only that application's session, and Logout
+	// returns PostLogoutURL. (v0.1.1 and earlier always did RP-initiated logout.)
+	EndProviderSession bool
+
 	// OnLogin runs after a session is created — for audit logging.
 	OnLogin func(ctx context.Context, r *http.Request, s *Session, id Identity)
 	// OnEvent receives telemetry. Optional.
@@ -646,10 +653,10 @@ func (m *Manager) refresh(ctx context.Context, s *Session) (*Session, error) {
 
 // ─── Logout ─────────────────────────────────────────────────────────────────
 
-// Logout ends the request's session and returns where to send the browser: the
-// provider's end_session_endpoint (RP-initiated logout, which also ends the
-// provider session and with it — via back-channel logout — every other
-// application's), or PostLogoutURL when the provider has none. The caller
+// Logout ends the request's session and returns where to send the browser:
+// PostLogoutURL, or — with EndProviderSession — the provider's
+// end_session_endpoint (RP-initiated logout, which also ends the provider
+// session and with it, via back-channel logout, every other application's). The caller
 // answers in its own response shape; the frontend navigates to the URL.
 func (m *Manager) Logout(w http.ResponseWriter, r *http.Request) string {
 	ctx := r.Context()
@@ -668,6 +675,9 @@ func (m *Manager) Logout(w http.ResponseWriter, r *http.Request) string {
 		return postLogout
 	}
 	m.end(ctx, s, "logout")
+	if !m.EndProviderSession {
+		return postLogout
+	}
 
 	p, adapter, err := m.provider(ctx, s.Provider)
 	if err != nil {
