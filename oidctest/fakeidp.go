@@ -116,6 +116,9 @@ type FakeIDP struct {
 	// server rejected the client", so it cannot prove the client sends it.
 	IgnorePKCE bool
 
+	// OmitUserInfoEndpoint drops userinfo_endpoint from the discovery document.
+	OmitUserInfoEndpoint bool
+
 	// NoSession makes the provider behave as if the user has no session with
 	// it: a prompt=none authorize answers error=login_required.
 	NoSession bool
@@ -205,6 +208,9 @@ func (f *FakeIDP) handleDiscovery(w http.ResponseWriter, _ *http.Request) {
 		"id_token_signing_alg_values_supported": []string{"RS256"},
 		"code_challenge_methods_supported":      []string{"S256"},
 		"grant_types_supported":                 []string{"authorization_code", "refresh_token"},
+	}
+	if f.OmitUserInfoEndpoint {
+		delete(doc, "userinfo_endpoint")
 	}
 	writeJSON(w, http.StatusOK, doc)
 }

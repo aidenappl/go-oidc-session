@@ -85,6 +85,17 @@ func newOIDCAdapter(ctx context.Context, p *Provider) (Adapter, error) {
 	// and verified no nonce at all.
 	verifier := op.Verifier(&oidc.Config{ClientID: p.ClientID})
 
+	if p.FetchUserInfo {
+		var doc struct {
+			UserInfoEndpoint string `json:"userinfo_endpoint"`
+		}
+		if err := op.Claims(&doc); err != nil || doc.UserInfoEndpoint == "" {
+			// Reported rather than silently skipping the fetch, because silently
+			// skipping means the sub check silently does not happen.
+			return nil, fmt.Errorf("sso: oidc provider %q asks for userinfo but its discovery document publishes no userinfo_endpoint", p.Slug)
+		}
+	}
+
 	return &oidcAdapter{
 		provider: p,
 		oidcProv: op,
