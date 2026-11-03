@@ -1,0 +1,4 @@
+# Nexus namespace for this repo: relay points agent sessions here.
+namespace = "appleby"
+# also = []            # extra namespaces to follow
+# tags = ["repo:go-oidc-session"]  # brief filter (default repo:<dir name>)
